@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "167878177349",
+    "project_id": "neptuneshop-f3052",
+    "storage_bucket": "neptuneshop-f3052.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:167878177349:android:b886f46a8a79de8458292c",
+        "android_client_info": {
+          "package_name": "com.example.neptuneshop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "167878177349-9ebuncmncih7ir0hlthngthvvq5pp9qm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.neptuneshop",
+            "certificate_hash": "ab10c5a8a2c6a10995dfe7aa834b8d044fc00a4e"
+          }
+        },
+        {
+          "client_id": "167878177349-tf4f071p8b56vooea0t322lid0nf073d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0IlB8fJBGQojLnkgqQIO478m0JJPJ5a0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "167878177349-tf4f071p8b56vooea0t322lid0nf073d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
