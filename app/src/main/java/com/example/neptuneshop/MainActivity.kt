@@ -22,6 +22,7 @@ import com.example.neptuneshop.network.RetrofitBuilder
 import com.example.neptuneshop.screens.LoginScreen
 import com.example.neptuneshop.screens.HomeScreen
 import com.example.neptuneshop.screens.ProfileScreen
+import com.example.neptuneshop.screens.Routes
 import com.example.neptuneshop.screens.SplashScreen
 import com.example.neptuneshop.screens.sign_in.GoogleAuthUiClient
 import com.example.neptuneshop.screens.sign_in.SignInViewModel
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
                 navController = navController,
                 startDestination = "splash",
             ) {
-                composable("login") {
+                composable(Routes.LoginScreen.route) {
                     val viewModel = viewModel<SignInViewModel>()
                     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -85,7 +86,7 @@ class MainActivity : ComponentActivity() {
                             }
 
 
-                            navController.navigate("home")
+                            navController.navigate(Routes.HomeScreen.route)
                             viewModel.resetState()
                         }
                     }
@@ -107,7 +108,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                composable("home"){
+                composable(Routes.HomeScreen.route){
                     HomeScreen(
                         navController = navController,
                         apiService = apiService,
@@ -123,10 +124,10 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
-                composable("profile"){
+                composable(Routes.ProfileScreen.route){
                     ProfileScreen(navController = navController)
                 }
-                composable("splash"){
+                composable(Routes.SplashScreen.route){
                     SplashScreen(
                         navController = navController,
                         googleAuthUiClient = googleAuthUiClient

@@ -421,7 +421,7 @@ fun LoginScreen(
                                 override fun onResponse(call: Call<User>, response: Response<User>) {
                                     if(response.isSuccessful){
                                         isLoading = false
-                                        navController.navigate("home")
+                                        navController.navigate(Routes.HomeScreen.route)
                                         val sharedPref = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
                                         with(sharedPref.edit()){
                                             putString("name", email)

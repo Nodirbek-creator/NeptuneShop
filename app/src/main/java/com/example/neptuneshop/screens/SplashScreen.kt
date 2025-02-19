@@ -51,10 +51,10 @@ fun SplashScreen(
         LaunchedEffect(Unit) {
             delay(500)
             if(googleAuthUiClient.getSignedInUser() != null){
-                navController.navigate("home")
+                navController.navigate(Routes.HomeScreen.route)
             }
             else{
-                navController.navigate("login")
+                navController.navigate(Routes.LoginScreen.route)
             }
 
 
