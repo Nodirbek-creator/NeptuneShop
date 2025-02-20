@@ -424,8 +424,10 @@ fun LoginScreen(
                                         navController.navigate(Routes.HomeScreen.route)
                                         val sharedPref = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
                                         with(sharedPref.edit()){
-                                            putString("name", email)
-                                            putString("profilePic", "")
+                                            putString("name", response.body()?.firstName)
+                                            putString("email", response.body()?.email)
+                                            putString("gender",response.body()?.gender)
+                                            putString("profilePic", response.body()?.image)
                                             apply()
                                         }
                                         Toast.makeText(

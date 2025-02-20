@@ -24,15 +24,18 @@ interface ApiService{
         @Path("category") category: String,
         @Query("limit") limit: Int = 50,
     ): Call<Products>
+
+
     //    https://dummyjson.com/products/6
     @GET("/products/{id}")
     fun getProductById(@Path("id") id: Int): Call<Product>
 
     //    https://dummyjson.com/products/search?q=phone
     @GET("/products/search")
-    fun searchProducts(@Query("q") q: String): Call<Products>
-
-
+    fun searchProducts(
+        @Query("q") q: String,
+        @Query("limit") limit: Int = 50,
+    ): Call<Products>
     //    https://dummyjson.com/auth/login
     @POST("/auth/login")
     fun login(@Body login: Login): Call<User>

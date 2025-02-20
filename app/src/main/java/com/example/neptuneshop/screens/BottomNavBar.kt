@@ -2,6 +2,7 @@ package com.example.neptuneshop.screens
 
 import android.media.Image
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
@@ -18,9 +19,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.neptuneshop.R
@@ -36,7 +40,6 @@ data class BottomNavItem(
 @Composable
 fun BottomNavBar(navController: NavHostController){
 
-    //bottom icons' list. here are 3 icons: Favorite, Recent, and Contacts.
     val bottomIcons = listOf(
         BottomNavItem(
             title = "Home",
@@ -71,8 +74,9 @@ fun BottomNavBar(navController: NavHostController){
                     navController.navigate(bottomNavItem.route)
                 },
                 icon = {
-                    Image(
+                    Icon(
                         painter = painterResource(bottomNavItem.icon),
+                        modifier = Modifier.size(24.dp),
                         contentDescription = bottomNavItem.title,
                     )
                 },

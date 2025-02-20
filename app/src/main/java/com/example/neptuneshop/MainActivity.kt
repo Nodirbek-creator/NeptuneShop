@@ -23,6 +23,7 @@ import com.example.neptuneshop.screens.LoginScreen
 import com.example.neptuneshop.screens.HomeScreen
 import com.example.neptuneshop.screens.ProfileScreen
 import com.example.neptuneshop.screens.Routes
+import com.example.neptuneshop.screens.SearchScreen
 import com.example.neptuneshop.screens.SplashScreen
 import com.example.neptuneshop.screens.sign_in.GoogleAuthUiClient
 import com.example.neptuneshop.screens.sign_in.SignInViewModel
@@ -125,13 +126,29 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable(Routes.ProfileScreen.route){
-                    ProfileScreen(navController = navController)
+                    ProfileScreen(
+                        navController = navController,
+                        onSignOut = {
+                            lifecycleScope.launch {
+                                googleAuthUiClient.signOut()
+                                Toast.makeText(
+                                    applicationContext,
+                                    "Signed Out successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        })
                 }
                 composable(Routes.SplashScreen.route){
                     SplashScreen(
                         navController = navController,
                         googleAuthUiClient = googleAuthUiClient
                     )
+                }
+                composable(Routes.SearchScreen.route){
+                    SearchScreen(
+                        navController = navController,
+                        apiService = apiService)
                 }
 
 

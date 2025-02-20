@@ -289,19 +289,26 @@ fun HomeScreen(
                                 }
                             }
                             //search field
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp)
-                                    .border(1.dp, Color.Gray, shape = RoundedCornerShape(10.dp))
-                                    .height(50.dp)
-                                    .background(Color.White),
-                                contentAlignment = Alignment.CenterStart
+                            Card(
+                                onClick = {navController.navigate(Routes.SearchScreen.route)},
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.Transparent
+                                )
                             ) {
-                                Row(modifier = Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.DarkGray)
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Text("Search Anything...", fontSize = 15.sp, color = Color.Gray)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                        .border(1.dp, Color.Gray, shape = RoundedCornerShape(10.dp))
+                                        .height(50.dp)
+                                        .background(Color.White),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    Row(modifier = Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Search, contentDescription = null, tint = Color.DarkGray)
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text("Search Anything...", fontSize = 15.sp, color = Color.Gray)
+                                    }
                                 }
                             }
                             //categories section
@@ -371,21 +378,20 @@ fun HomeScreen(
                             LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
                                 item { Banner() }
                                 item {
-                                    //cheapest items
-                                    val cheapestItems = products.filter { it.price <= 20 }.sortedBy { it.price }
-                                    if(cheapestItems.isNotEmpty()){
-                                        Column(modifier = Modifier.padding(8.dp)) {
-                                            TitleText("Budget picks")
+                                    //Highest rating items
+                                    val highratedItems = products.filter { it.rating >= 4.5 }.sortedByDescending { it.rating }
+                                    if(highratedItems.isNotEmpty()){
+                                        Column(
+                                            modifier = Modifier.padding(8.dp)
+                                        ) {
+                                            TitleText("Recommended for you")
                                             LazyRow {
-                                                items(products.filter { it.price <= 20}.sortedBy { it.price }){
-                                                    ProductCard(
-                                                        product = it
-                                                    ) { }
+                                                items(highratedItems){
+                                                    ProductCard(it) { }
                                                 }
                                             }
                                         }
                                     }
-
                                 }
                                 item {
                                     //most discounted items
@@ -406,21 +412,24 @@ fun HomeScreen(
                                     }
                                 }
                                 item {
-                                    //Highest rating items
-                                    val highratedItems = products.filter { it.rating >= 4.5 }.sortedByDescending { it.rating }
-                                    if(highratedItems.isNotEmpty()){
-                                        Column(
-                                            modifier = Modifier.padding(8.dp)
-                                        ) {
-                                            TitleText("Recommended for you")
+                                    //cheapest items
+                                    val cheapestItems = products.filter { it.price <= 20 }.sortedBy { it.price }
+                                    if(cheapestItems.isNotEmpty()){
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            TitleText("Budget picks")
                                             LazyRow {
-                                                items(highratedItems){
-                                                    ProductCard(it) { }
+                                                items(products.filter { it.price <= 20}.sortedBy { it.price }){
+                                                    ProductCard(
+                                                        product = it
+                                                    ) { }
                                                 }
                                             }
                                         }
                                     }
+
                                 }
+
+
 
                             }
                         }
