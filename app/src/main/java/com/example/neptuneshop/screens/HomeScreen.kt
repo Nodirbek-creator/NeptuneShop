@@ -387,7 +387,9 @@ fun HomeScreen(
                                             TitleText("Recommended for you")
                                             LazyRow {
                                                 items(highratedItems){
-                                                    ProductCard(it) { }
+                                                    ProductCard(it) {
+                                                        navController.navigate("${Routes.ProductInfo.route}/${it.id}")
+                                                    }
                                                 }
                                             }
                                         }
@@ -404,7 +406,7 @@ fun HomeScreen(
                                             LazyRow {
                                                 items(discountedItems){
                                                     ProductCard(it) {
-
+                                                        navController.navigate("${Routes.ProductInfo.route}/${it.id}")
                                                     }
                                                 }
                                             }
@@ -419,9 +421,9 @@ fun HomeScreen(
                                             TitleText("Budget picks")
                                             LazyRow {
                                                 items(products.filter { it.price <= 20}.sortedBy { it.price }){
-                                                    ProductCard(
-                                                        product = it
-                                                    ) { }
+                                                    ProductCard(it) {
+                                                        navController.navigate("${Routes.ProductInfo.route}/${it.id}")
+                                                    }
                                                 }
                                             }
                                         }
@@ -459,7 +461,7 @@ fun ProductCard(
                     model = ImageRequest.Builder(LocalContext.current)
                         .memoryCachePolicy(CachePolicy.ENABLED)
                         .diskCachePolicy(CachePolicy.ENABLED)
-                        .data(product.images[0])
+                        .data(product.thumbnail)
                         .size(300,200)
                         .scale(Scale.FILL)
                         .crossfade(true)

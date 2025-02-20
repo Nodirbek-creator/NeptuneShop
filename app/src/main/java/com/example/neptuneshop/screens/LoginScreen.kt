@@ -424,6 +424,7 @@ fun LoginScreen(
                                         navController.navigate(Routes.HomeScreen.route)
                                         val sharedPref = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
                                         with(sharedPref.edit()){
+                                            putString("userId", "${response.body()?.id}")
                                             putString("name", response.body()?.firstName)
                                             putString("email", response.body()?.email)
                                             putString("gender",response.body()?.gender)
@@ -432,7 +433,7 @@ fun LoginScreen(
                                         }
                                         Toast.makeText(
                                             context,
-                                            "Sign In successful",
+                                            "SignIn successful id:${response.body()?.id}",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }

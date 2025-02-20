@@ -7,7 +7,8 @@ enum class Screens {
     Categories,
     Orders,
     Profile,
-    Search
+    Search,
+    ProductInfo
 }
 sealed class Routes(val route: String){
     data object LoginScreen :Routes(Screens.Login.name)
@@ -17,4 +18,5 @@ sealed class Routes(val route: String){
     data object OrdersScreen :Routes(Screens.Orders.name)
     data object ProfileScreen :Routes(Screens.Profile.name)
     data object SearchScreen: Routes(Screens.Search.name)
+    data object ProductInfo: Routes(Screens.ProductInfo.name)
 }

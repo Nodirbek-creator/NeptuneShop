@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -21,6 +22,7 @@ import com.example.neptuneshop.network.ApiService
 import com.example.neptuneshop.network.RetrofitBuilder
 import com.example.neptuneshop.screens.LoginScreen
 import com.example.neptuneshop.screens.HomeScreen
+import com.example.neptuneshop.screens.ProductInfo
 import com.example.neptuneshop.screens.ProfileScreen
 import com.example.neptuneshop.screens.Routes
 import com.example.neptuneshop.screens.SearchScreen
@@ -71,14 +73,16 @@ class MainActivity : ComponentActivity() {
 
                     LaunchedEffect(key1 = state.isSignInSuccessful) {
                         if(state.isSignInSuccessful) {
-                            Toast.makeText(
-                                applicationContext,
-                                "Sign in successful",
-                                Toast.LENGTH_SHORT
-                            ).show()
+
                             val sharedPref = applicationContext.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
                             val user = googleAuthUiClient.getSignedInUser()
+                            Toast.makeText(
+                                applicationContext,
+                                "SignIn successful id:${user?.userId}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             with(sharedPref.edit()) {
+                                putString("userId", user?.userId)
                                 putString("name", user?.username)
                                 putString("email", user?.email)
                                 putString("mobile", user?.phoneNumber)
@@ -149,6 +153,14 @@ class MainActivity : ComponentActivity() {
                     SearchScreen(
                         navController = navController,
                         apiService = apiService)
+                }
+                composable("${Routes.ProductInfo.route}/{id}"){ stackEntry ->
+                    val id = stackEntry.arguments?.getString("id")
+                    ProductInfo(
+                        id = id!!.toInt(),
+                        navController = navController,
+                        apiService = apiService
+                    )
                 }
 
 

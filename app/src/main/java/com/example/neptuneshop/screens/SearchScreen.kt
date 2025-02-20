@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
@@ -134,17 +135,32 @@ fun SearchScreen(
         OutlinedTextField(value = searchQuery, onValueChange = {searchQuery = it},
             modifier = Modifier.fillMaxWidth().focusable(),
             leadingIcon = {
-                IconButton(
-                    onClick = {
-                        searchQuery = ""
-                        searchTrigger = !searchTrigger
+                if(searchQuery.isNotEmpty()){
+                    IconButton(
+                        onClick = {
+                            searchQuery = ""
+                            searchTrigger = !searchTrigger
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear",
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                ) {
-                    Icon(
-                    imageVector = Icons.Default.Clear,
-                    contentDescription = "Back",
-                    modifier = Modifier.size(24.dp)
-                    )
+                }
+                else{
+                    IconButton(
+                        onClick = {
+                            navController.navigate(Routes.HomeScreen.route)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             },
             trailingIcon = {
