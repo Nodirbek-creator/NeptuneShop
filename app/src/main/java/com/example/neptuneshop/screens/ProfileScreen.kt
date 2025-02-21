@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.rememberAsyncImagePainter
 import com.example.neptuneshop.R
 import com.example.neptuneshop.ui.theme.myBlue
@@ -73,6 +74,8 @@ fun ProfileScreen(
     val context = LocalContext.current
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     val sharedPreferences = remember { context.getSharedPreferences("user_profile", Context.MODE_PRIVATE) }
 
     var name by remember { mutableStateOf(sharedPreferences.getString("name", "David Guetta") ?: "David Guetta") }
@@ -108,13 +111,12 @@ fun ProfileScreen(
     }
 
     val items = listOf(
-        MenuOption("Shop by Categories", R.drawable.category),
-        MenuOption("My Orders", R.drawable.clock),
-        MenuOption("Favorites", R.drawable.heart),
-        MenuOption("Profile", R.drawable.account),
-        MenuOption("Saved Cards", R.drawable.card),
-        MenuOption("Contributors", R.drawable.conversation),
-        MenuOption("Sign Out", R.drawable.exit)
+        MenuOption("Shop by Categories", R.drawable.category, Routes.CategoriesScreen.route),
+        MenuOption("My Orders", R.drawable.clock, Routes.OrdersScreen.route),
+        MenuOption("Favorites", R.drawable.heart, Routes.FavoritesScreen.route),
+        MenuOption("Profile", R.drawable.account, Routes.ProfileScreen.route),
+        MenuOption("Contributors", R.drawable.conversation, Routes.Contributors.route),
+        MenuOption("Sign Out", R.drawable.exit, Routes.LoginScreen.route)
 
     )
     ModalNavigationDrawer(
@@ -135,14 +137,11 @@ fun ProfileScreen(
                             )
                         },
                         shape = RoundedCornerShape(12.dp),
-                        selected = false,
+                        selected = item.route == currentRoute,
                         onClick = {
+                            navController.navigate(item.route)
+                            scope.launch{drawerState.close()}
                             when (item.title) {
-                                "Profile" -> {
-                                    scope.launch {
-                                        navController.navigate(Routes.ProfileScreen.route)
-                                    }
-                                } // This will now work
                                 "Sign Out" -> {
                                     scope.launch {
                                         val sharedPreferences = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
@@ -158,9 +157,6 @@ fun ProfileScreen(
                                         onSignOut()
                                         navController.navigate(Routes.LoginScreen.route)
                                     }
-                                }
-                                else ->{
-                                    scope.launch { drawerState.close() }
                                 }
                             }
                         }

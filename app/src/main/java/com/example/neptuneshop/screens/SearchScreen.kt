@@ -196,6 +196,7 @@ fun SearchScreen(
             keyboardActions = KeyboardActions(
                 onSearch = {
                     focusManager.clearFocus()
+                    searchTrigger = !searchTrigger
                 }
             )
         )
@@ -212,10 +213,7 @@ fun SearchScreen(
                     verticalArrangement = Arrangement.Center
                 ){
                     Spacer(Modifier.height(32.dp))
-                    CircularProgressIndicator(
-                        color = myBlue,
-                        modifier = Modifier.size(96.dp)
-                    )
+                    CircularProgressIndicator(color = myBlue,)
                 }
             }
             errorMessage != null ->{
@@ -244,7 +242,7 @@ fun SearchScreen(
                     ) {
                         items(allProducts){
                             OneCardMens(it){
-
+                                navController.navigate("${Routes.ProductInfo.route}/${it.id}")
                             }
                         }
                     }
@@ -294,7 +292,7 @@ fun OneCardMens(
                 modifier = Modifier.width(150.dp).align(Alignment.TopCenter),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if(product.rating >= 4.5 && product.discountPercentage>=10){
+                if(product.rating >= 4){
                     Text(
                         "Trending",
                         modifier = Modifier
@@ -302,14 +300,6 @@ fun OneCardMens(
                             .padding(5.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(40.dp))
-                Icon(
-                    Icons.Default.FavoriteBorder,
-                    contentDescription = "favourite",
-                    modifier = Modifier
-                        .background(Color.White, shape = RoundedCornerShape(25.dp))
-                        .padding(3.dp)
-                )
             }
         }
         Spacer(Modifier.height(14.dp))

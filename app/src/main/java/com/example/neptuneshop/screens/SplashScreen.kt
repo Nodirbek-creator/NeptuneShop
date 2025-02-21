@@ -1,5 +1,6 @@
 package com.example.neptuneshop.screens
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +32,9 @@ fun SplashScreen(
     navController: NavHostController,
     googleAuthUiClient: GoogleAuthUiClient
 ) {
-
+    val context = LocalContext.current
+    val shared = context.getSharedPreferences("user_profile",Context.MODE_PRIVATE)
+    val userId = shared.getString("userId","")
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = myBlue
@@ -51,6 +55,9 @@ fun SplashScreen(
         LaunchedEffect(Unit) {
             delay(500)
             if(googleAuthUiClient.getSignedInUser() != null){
+                navController.navigate(Routes.HomeScreen.route)
+            }
+            else if(userId?.isNotEmpty() == true){
                 navController.navigate(Routes.HomeScreen.route)
             }
             else{

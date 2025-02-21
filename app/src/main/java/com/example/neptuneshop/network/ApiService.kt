@@ -1,5 +1,6 @@
 package com.example.neptuneshop.network
 
+import com.example.neptuneshop.model.Cart
 import com.example.neptuneshop.model.Login
 import com.example.neptuneshop.model.Product
 import com.example.neptuneshop.model.Products
@@ -39,4 +40,8 @@ interface ApiService{
     //    https://dummyjson.com/auth/login
     @POST("/auth/login")
     fun login(@Body login: Login): Call<User>
+
+    //'https://dummyjson.com/carts/1'
+    @GET("/carts/{id}")
+    fun getCartById(@Path("id") userId: Int): Call<Cart>
 }

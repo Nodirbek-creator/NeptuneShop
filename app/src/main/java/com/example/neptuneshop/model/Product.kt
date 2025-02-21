@@ -1,5 +1,8 @@
 package com.example.neptuneshop.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
 data class Product(
     val availabilityStatus: String,
     val brand: String,
@@ -7,6 +10,7 @@ data class Product(
     val description: String,
     val dimensions: Dimensions,
     val discountPercentage: Double,
+    @PrimaryKey
     val id: Int,
     val images: List<String>,
     val meta: Meta,

@@ -52,8 +52,8 @@ fun BottomNavBar(navController: NavHostController){
             route = Routes.CategoriesScreen.route
         ),
         BottomNavItem(
-            title = "Records",
-            icon = R.drawable.orders,
+            title = "Orders",
+            icon = R.drawable.shopping_bag,
             route = Routes.OrdersScreen.route
         ),
         BottomNavItem(

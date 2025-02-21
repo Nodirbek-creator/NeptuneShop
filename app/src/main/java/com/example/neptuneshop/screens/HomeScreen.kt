@@ -2,6 +2,7 @@ package com.example.neptuneshop.screens
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,11 +33,13 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -56,17 +59,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -94,7 +101,6 @@ fun HomeScreen(
     onSignOut:() -> Unit,
     apiService: ApiService,
 ) {
-    var products by remember { mutableStateOf<List<Product>>(emptyList()) }
     var allProducts by remember { mutableStateOf<List<Product>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -187,24 +193,19 @@ fun HomeScreen(
                 }
             }
             else ->{
-                products = if(selectedCategory == "all"){
-                    allProducts
-                } else{
-                    allProducts.filter { it.category == selectedCategory }
-                }
                 val items = listOf(
-                    MenuOption("Shop by Categories", R.drawable.category),
-                    MenuOption("My Orders", R.drawable.clock),
-                    MenuOption("Favorites", R.drawable.heart),
-                    MenuOption("Profile", R.drawable.account),
-                    MenuOption("Saved Cards", R.drawable.card),
-                    MenuOption("Contributors", R.drawable.conversation),
-                    MenuOption("Sign Out", R.drawable.exit)
-
+                    MenuOption("Shop by Categories", R.drawable.category, Routes.CategoriesScreen.route),
+                    MenuOption("My Orders", R.drawable.clock, Routes.OrdersScreen.route),
+                    MenuOption("Favorites", R.drawable.heart, Routes.FavoritesScreen.route),
+                    MenuOption("Profile", R.drawable.account, Routes.ProfileScreen.route),
+                    MenuOption("Contributors", R.drawable.conversation, Routes.Contributors.route),
+                    MenuOption("Sign Out", R.drawable.exit, Routes.LoginScreen.route)
                 )
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
@@ -223,14 +224,11 @@ fun HomeScreen(
                                         )
                                     },
                                     shape = RoundedCornerShape(12.dp),
-                                    selected = false,
+                                    selected = item.route == currentRoute,
                                     onClick = {
+                                        navController.navigate(item.route)
+                                        scope.launch { drawerState.close() }
                                         when (item.title) {
-                                            "Profile" -> {
-                                                scope.launch {
-                                                    navController.navigate(Routes.ProfileScreen.route)
-                                                }
-                                            } // This will now work
                                             "Sign Out" -> {
                                                 scope.launch {
                                                     val sharedPreferences = context.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
@@ -244,11 +242,7 @@ fun HomeScreen(
                                                         apply()
                                                     }
                                                     onSignOut()
-                                                    navController.navigate(Routes.LoginScreen.route)
                                                 }
-                                            }
-                                            else ->{
-                                                scope.launch { drawerState.close() }
                                             }
                                         }
                                     }
@@ -324,62 +318,52 @@ fun HomeScreen(
                                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ){
-                                        items(listOf(
-                                            "all",
-
-                                            "beauty",
-                                            "fragrances",
-                                            "skin-care",
-
-                                            "furniture",
-                                            "home-decoration",
-                                            "kitchen-accessories",
-
-                                            "groceries",
-
-                                            "laptops",
-                                            "smartphones",
-                                            "tablets",
-
-                                            "mens-shirts",
-                                            "mens-shoes",
-                                            "mens-watches",
-
-                                            "motorcycle",
-                                            "vehicle",
-
-                                            "mobile-accessories",
-                                            "sports-accessories",
-                                            "sunglasses",
-
-
-                                            "tops",
-                                            "womens-bags",
-                                            "womens-dresses",
-                                            "womens-jewellery",
-                                            "womens-shoes",
-                                            "womens-watches"
-                                        )) { category ->
-                                            TextButton(
+                                        val list = listOf(
+                                            Categories(R.drawable.all, "All","all"),
+                                            Categories(R.drawable.fashion, "Fashion","tops"),
+                                            Categories(R.drawable.perfume, "Perfume","fragrances"),
+                                            Categories(R.drawable.appliances, "Appliances","kitchen-accessories"),
+                                            Categories(R.drawable.furniture, "Furniture","furniture"),
+                                            Categories(R.drawable.electronics, "Electronics","smartphones"),
+                                            Categories(R.drawable.groceries, "Groceries","groceries"),
+                                            Categories(R.drawable.accessories, "Accessories","mobile-accessories"),
+                                        )
+                                        items(list) {
+                                            Button(
                                                 onClick = {
-                                                    selectedCategory = category
+                                                    selectedCategory = it.category
                                                 },
                                                 colors = ButtonDefaults.textButtonColors(
-                                                    containerColor = if(category == selectedCategory) myBlue else Color.White,
-                                                    contentColor = if(category == selectedCategory) Color.White else myBlue
-                                                )
+                                                    containerColor = Color.White
+                                                ),
+                                                border = if(it.category == selectedCategory) BorderStroke(width = 1.dp, color = myBlue) else BorderStroke(0.dp, Color.Transparent),
+                                                shape = CircleShape,
+                                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
+                                                modifier = Modifier
+                                                    .size(80.dp), // Adjust size as needed
+//                                                    .shadow(8.dp, CircleShape), // Elevated effect
+                                                contentPadding = PaddingValues(0.dp)
                                             ) {
-                                                Text(text = category)
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Image(
+                                                        painter = painterResource(id = it.image),
+                                                        contentDescription = it.title,
+                                                        modifier = Modifier.size(24.dp) // Adjust image size as needed
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(text = it.title, textAlign = TextAlign.Center, fontSize = 10.sp, color = Color.Black)
+                                                }
                                             }
                                         }
                                     }
+                                    Spacer(Modifier.height(16.dp))
                                 }
                             }
                             LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
                                 item { Banner() }
                                 item {
                                     //Highest rating items
-                                    val highratedItems = products.filter { it.rating >= 4.5 }.sortedByDescending { it.rating }
+                                    val highratedItems = allProducts.sortedByDescending { it.rating }.take(5)
                                     if(highratedItems.isNotEmpty()){
                                         Column(
                                             modifier = Modifier.padding(8.dp)
@@ -397,7 +381,7 @@ fun HomeScreen(
                                 }
                                 item {
                                     //most discounted items
-                                    val discountedItems = products.filter { it.discountPercentage >= 10 }.sortedByDescending { it.discountPercentage }
+                                    val discountedItems = allProducts.sortedByDescending{ it.discountPercentage }.take(5)
                                     if(discountedItems.isNotEmpty()){
                                         Column(
                                             modifier = Modifier.padding(8.dp)
@@ -415,12 +399,12 @@ fun HomeScreen(
                                 }
                                 item {
                                     //cheapest items
-                                    val cheapestItems = products.filter { it.price <= 20 }.sortedBy { it.price }
+                                    val cheapestItems = allProducts.sortedBy { it.price }
                                     if(cheapestItems.isNotEmpty()){
                                         Column(modifier = Modifier.padding(8.dp)) {
                                             TitleText("Budget picks")
                                             LazyRow {
-                                                items(products.filter { it.price <= 20}.sortedBy { it.price }){
+                                                items(allProducts.sortedBy { it.price }.take(5)){
                                                     ProductCard(it) {
                                                         navController.navigate("${Routes.ProductInfo.route}/${it.id}")
                                                     }
@@ -442,7 +426,7 @@ fun HomeScreen(
     }
 }
 
-data class MenuOption(val title: String, val icon: Int)
+data class MenuOption(val title: String, val icon: Int, val route: String)
 
 
 
@@ -450,22 +434,23 @@ data class MenuOption(val title: String, val icon: Int)
 fun ProductCard(
     product: Product,
     onClick:() ->Unit){
-    Card(
+    Card (
         modifier = Modifier.padding(8.dp).size(230.dp,280.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         onClick = {onClick()}) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(start = 4.dp)) {
             Box {
                 AsyncImage(
                     modifier = Modifier.size(300.dp, 140.dp),
                     model = ImageRequest.Builder(LocalContext.current)
                         .memoryCachePolicy(CachePolicy.ENABLED)
                         .diskCachePolicy(CachePolicy.ENABLED)
-                        .data(product.thumbnail)
+                        .data(product.images[0])
                         .size(300,200)
                         .scale(Scale.FILL)
                         .crossfade(true)
                         .build(),
+                    placeholder = painterResource(R.drawable.loading),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,)
                 Row(
@@ -473,12 +458,6 @@ fun ProductCard(
                     horizontalArrangement = Arrangement.End
                 ) {
                     Spacer(modifier = Modifier.width(40.dp))
-                    Icon(
-                        Icons.Default.FavoriteBorder, contentDescription = "favourite",
-                        modifier = Modifier
-                            .background(Color.White, shape = RoundedCornerShape(25.dp))
-                            .padding(3.dp)
-                    )
                 }
             }
             Spacer(Modifier.height(14.dp))
@@ -522,7 +501,7 @@ fun ProductCard(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Banner() {
-    val banners= listOf(R.drawable.banner1,R.drawable.banner2,R.drawable.banner1,R.drawable.banner2,)
+    val banners= listOf(R.drawable.banner_lipstick,R.drawable.banner_phone,R.drawable.banner_perfume1,R.drawable.banner_phone2, R.drawable.banner_perfume2)
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
     Column {
@@ -538,7 +517,7 @@ fun Banner() {
                 Image(
                     painter = painterResource(id = banners[page]),
                     contentDescription = "Banner $page",
-                    modifier = Modifier.fillMaxWidth().height(256.dp).align(Alignment.TopCenter))
+                    modifier = Modifier.fillMaxWidth().height(256.dp).align(Alignment.Center))
             }
         }
 
@@ -559,6 +538,8 @@ fun Banner() {
     }
 }
 
+
+data class Categories(val image:Int, val title:String, val category: String)
 
 
 @Composable

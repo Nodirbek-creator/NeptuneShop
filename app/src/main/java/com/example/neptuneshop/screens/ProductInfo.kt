@@ -1,9 +1,11 @@
 package com.example.neptuneshop.screens
 
-import android.content.Context
 import android.util.Log
-import androidx.compose.foundation.Image
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,24 +27,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,7 +50,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -62,8 +63,11 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.size.Scale
+import com.example.neptuneshop.AppDatabase
 import com.example.neptuneshop.R
+import com.example.neptuneshop.model.FavProduct
 import com.example.neptuneshop.model.Product
+import com.example.neptuneshop.model.ProductX
 import com.example.neptuneshop.network.ApiService
 import com.example.neptuneshop.ui.theme.myBlue
 import com.example.neptuneshop.ui.theme.myRed
@@ -71,6 +75,10 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,229 +87,459 @@ fun ProductInfo(
     id:Int,
     navController: NavHostController,
     apiService: ApiService,
+    db:AppDatabase
 ) {
-    var products by remember { mutableStateOf<List<Product>>(emptyList()) }
+    var product by remember { mutableStateOf<Product?>(null) }
     var isFavorite by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
+    val favDao = db.favoriteDao()
+    val buyDao = db.purchaseDao()
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
-        isLoading = true
-        try{
-            apiService.getProductById(id).enqueue(object : Callback<Product>{
-                override fun onResponse(call: Call<Product>, response: Response<Product>) {
-                    if(response.isSuccessful){
-                        isLoading = false
-                        products = listOf(response.body()!!)
+        coroutineScope.launch {
+            try {
+                apiService.getProductById(id).enqueue(object : Callback<Product>{
+                    override fun onResponse(call: Call<Product>, response: Response<Product>) {
+                        if(response.isSuccessful){
+                            product = response.body()!!
+                            isFavorite = db.favoriteDao().favoriteById(product!!.id) != null
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<Product>, t: Throwable) {
-                    Log.d("fetch Failed", "${t.message}")
-                }
+                    override fun onFailure(call: Call<Product>, t: Throwable) {
+                        Log.d("fetch Failed", "${t.message}")
+                    }
 
-            })
-        }
-        catch (e:Exception){
-            Log.d("fetch Failed", "${e.message}")
+                })
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("") },
-                navigationIcon = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(
+                    onClick = {
+                        navController.navigate(Routes.HomeScreen.route)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Black
+                    )
+                }
+                IconButton(
+                    onClick = {}
+                ) {
                     IconButton(
                         onClick = {
-                            navController.navigate(Routes.HomeScreen.route)
+                            isFavorite = !isFavorite
+                            if(!isFavorite){
+                                favDao.deleteFavById(product!!.id)
+                            }
+                            else{
+                                if(product != null){
+                                    favDao.addFavorite(
+                                        favProduct = FavProduct(
+                                            id = product!!.id,
+                                            thumbnail = product!!.images[0],
+                                            title = product!!.title,
+                                            rating = product!!.rating,
+                                            stock = product!!.stock,
+                                            price = product!!.price,
+                                            discountPercentage = product!!.discountPercentage
+                                        )
+                                    )
+                                }
+                            }
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = if(isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                             contentDescription = "",
                             modifier = Modifier.size(24.dp),
-                            tint = Color.Black
+                            tint = if(isFavorite) myRed else Color.Black
                         )
                     }
-                },
-                actions = {
-
-                    Row(
-                        modifier = Modifier.width(300.dp).padding(start = 40.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        if (isFavorite) {
-                            IconButton(
-                                onClick = { isFavorite = !isFavorite },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    null,
-                                    tint = myRed,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        } else {
-                            IconButton(
-                                onClick = { isFavorite = !isFavorite },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.FavoriteBorder,
-                                    null,
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
-
-                        IconButton (
-                            onClick = { },
-
-                            ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White
-                            ),
-                            shape = CircleShape
-                        ) {
-                            Image(
-                                painter = painterResource(R.drawable.shopping_bag),
-                                null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(30.dp)
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
-            )
+                }
+            }
         },
-        contentWindowInsets = WindowInsets.systemBars
-    ) {
-            values ->
+        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
+    ) { values ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(values)
                 .verticalScroll(rememberScrollState())
         ) {
-            val product = products[0]
-            if(isLoading){
+            if(product == null){
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    CircularProgressIndicator(
-                        color = myBlue,
-                        modifier = Modifier.size(160.dp)
-                    )
+                    CircularProgressIndicator(color = myBlue,)
                 }
             }
             else{
-                ProductImageSection(product.images[0])
-                ProductDetailsSection(product)
-                ProductDescription(product)
-                RatingsAndReviews(product)
-                ActionButtons()
+                ProductImageSlider(imageUrls = product!!.images)
+                Spacer(Modifier.height(8.dp))
+                ProductDetailsSection(product!!)
+                ReviewSection(product!!)
+                var count by remember { mutableStateOf(0) }
+                Text("Amount: ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween // Distributes items: start, center, end
+                ) {
+                    Button(
+                        onClick = { if(count>0){ count-- }},
+                        colors = ButtonDefaults.textButtonColors(containerColor = myBlue, contentColor = Color.White)
+                        ) {
+                        Text(text = "-")
+                    }
+
+                    Text(text = count.toString(), fontSize = 18.sp)
+
+                    Button(
+                        onClick = { if(count<product!!.stock){count++}},
+                        colors = ButtonDefaults.textButtonColors(containerColor = myBlue, contentColor = Color.White)) {
+                        Text(text = "+")
+                    }
+                }
+                Button(
+                    onClick = {
+                        if(count>0){
+                            buyDao.buyProduct(
+                                productX = ProductX(
+                                    id = product!!.id,
+                                    price = product!!.price,
+                                    quantity = count,
+                                    thumbnail = product!!.images[0],
+                                    title = product!!.title,
+                                    discountPercentage = product!!.discountPercentage,
+                                    discountedTotal = (product!!.price*count)*(100-product!!.discountPercentage),
+                                    total = (product!!.price * count)
+                                )
+                            )
+                            Toast.makeText(context, "Added successfully:)", Toast.LENGTH_SHORT).show()
+                        }
+                        else{
+                            Toast.makeText(context, "Insert the correct amount!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = myBlue,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                ) {
+                    Text("Add to Cart", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
             }
         }
     }
 
 }
-
 @Composable
-fun ProductImageSection(
-    imageUrl:String
-) {
-    AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .memoryCachePolicy(CachePolicy.ENABLED)
-            .diskCachePolicy(CachePolicy.ENABLED)
-            .data(imageUrl)
-            .size(300,200)
-            .scale(Scale.FILL)
-            .crossfade(true)
-            .build(),
-        contentDescription = "Product Image",
-        modifier = Modifier.fillMaxWidth().height(480.dp),
-        contentScale = ContentScale.Crop
-    )
-}
+fun ProductImageSlider(imageUrls: List<String>) {
+    val pagerState = rememberPagerState(pageCount = { imageUrls.size })
 
-@Composable
-fun ProductDetailsSection(
-    product: Product
-) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(product.brand, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(product.title, color = Color.Gray, fontSize = 16.sp)
-        Row(modifier = Modifier.padding(top = 8.dp)) {
-            Text("$${product.price}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("$${String.format("%.2f",(product.price / (1 - product.discountPercentage/100)))}", fontSize = 14.sp, color = Color.Gray)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("${product.discountPercentage}% off", fontSize = 14.sp, color = Color.Green)
+    Column {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth().height(250.dp))
+        { page ->
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .data(imageUrls[page])
+                    .size(300,200)
+                    .scale(Scale.FILL)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.loading),
+                contentDescription = "Product Image",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
+        }
+        if(imageUrls.size>1){
+            Row(
+                Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(imageUrls.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(if (pagerState.currentPage == index) myBlue else Color.LightGray, CircleShape),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+            }
         }
     }
 }
-
 @Composable
-fun ProductDescription(
-    product: Product
-) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Product Details", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text("WarrantyInformation: ${product.warrantyInformation}\nShippingInformation: ${product.shippingInformation}\nAvailabilityStatus: ${product.availabilityStatus}\n*ReturnPolicy: ${product.returnPolicy}", color = Color.Gray, fontSize = 16.sp)
-    }
-}
+fun ProductDetailsSection(product: Product) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        //Title
+        Text(
+            text = product.title,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-@Composable
-fun RatingsAndReviews(
-    product: Product
-) {
-    val review = product.reviews[0]
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Ratings & Reviews (${product.reviews.size} ratings)", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Row(modifier = Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("${review.rating}/5", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Overall Rating", fontSize = 14.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Rating & Reviews
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Star, contentDescription = "Rating", tint = Color(0xFFFFD700))
+            Text(
+                text = "${product.rating}",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+            Text(
+                text = "${product.reviews.size} Reviews",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(review.reviewerName, fontSize = 20.sp, color = Color.Black)
-        Text(review.comment, fontSize = 16.sp, color = Color.Gray)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Price Section
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "$${String.format("%.2f", product.price - (product.price * product.discountPercentage / 100))}",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Text(
+                text = "$${product.price}",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                textDecoration = TextDecoration.LineThrough,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Text(
+                text = "${product.discountPercentage}% OFF",
+                fontSize = 14.sp,
+                color = Color.Red,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Stock Availability & Brand
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = buildAnnotatedString {
+                    append("Brand: ")
+                    withStyle(SpanStyle(
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )){
+                        append(product.brand)
+                    }
+                },
+                fontSize = 18.sp,
+                color = Color.Gray)
+            Text(
+                text = "Only ${product.stock} Left",
+                fontSize = 16.sp,
+                color = Color.Red,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Additional Product Info
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text(
+                    text = "Product details:",
+                    fontSize = 20.sp,
+                    color = Color.Black
+                )
+            }
+            Text(
+                text = "- "+product.shippingInformation,
+                modifier = Modifier.padding(start = 8.dp),
+                fontSize = 16.sp,
+                color = Color.Gray
+            )
+            Text(
+                text = "- "+product.warrantyInformation,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(start = 8.dp),
+                color = Color.Gray
+            )
+            Text(
+                text = "- "+product.returnPolicy,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(start = 8.dp),
+                color = Color.Gray
+            )
+        }
+
     }
 }
-
-
 @Composable
-fun ActionButtons() {
-    Row(modifier = Modifier.padding(16.dp)) {
-        Button(
-            onClick = { /* TODO */ },
-            modifier = Modifier.weight(1f).padding(end = 8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Yellow)
-        ) { Text("Add to cart", color = Color.White) }
-        Button(
-            onClick = { /* TODO */ },
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
-        ) { Text("Buy Now", color = Color.White) }
+fun ReviewSection(product: Product) {
+    var date = formatDate(product.reviews[0].date)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Section Title
+        Text(
+            text = "Ratings & Reviews",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Overall Rating Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "${product.rating}/5",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${product.reviews.size} Ratings",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+            Button(
+                onClick = { /* Handle Rating Action */ },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF1F6))
+            ) {
+                Text(text = "Rate", color = Color.Blue)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Display First Review (Following Example Photo)
+        if (product.reviews.isNotEmpty()) {
+            val review = product.reviews.first()
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
+                    .padding(16.dp)
+            ) {
+                // Reviewer Name as Comment Title
+                Text(
+                    text = review.reviewerName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Star Rating Row
+                Row {
+                    repeat(review.rating) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Star",
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Review Comment
+                Text(
+                    text = review.comment,
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Reviewer Email (Replaces Name in Gray)
+                Text(
+                    text = "${review.reviewerEmail},  $date",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+            }
+        }
     }
+}
+fun formatDate(inputDate: String): String {
+    // Parse the input date string
+    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+    inputFormat.timeZone = TimeZone.getTimeZone("UTC") // Set UTC timezone
+
+    val date = inputFormat.parse(inputDate) ?: return ""
+
+    // Extract day, month, and year
+    val calendar = Calendar.getInstance().apply { time = date }
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    val month = SimpleDateFormat("MMMM", Locale.US).format(date)
+    val year = calendar.get(Calendar.YEAR)
+
+    // Get ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+    val ordinal = when {
+        day in 11..13 -> "th"
+        day % 10 == 1 -> "st"
+        day % 10 == 2 -> "nd"
+        day % 10 == 3 -> "rd"
+        else -> "th"
+    }
+
+    // Return formatted date
+    return "$day$ordinal $month, $year"
 }

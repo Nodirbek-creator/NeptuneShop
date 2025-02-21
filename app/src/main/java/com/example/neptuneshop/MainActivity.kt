@@ -20,8 +20,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.neptuneshop.network.ApiService
 import com.example.neptuneshop.network.RetrofitBuilder
+import com.example.neptuneshop.screens.CategoriesScreen
+import com.example.neptuneshop.screens.Contributors
+import com.example.neptuneshop.screens.FavoriteScreen
 import com.example.neptuneshop.screens.LoginScreen
 import com.example.neptuneshop.screens.HomeScreen
+import com.example.neptuneshop.screens.OrdersScreen
 import com.example.neptuneshop.screens.ProductInfo
 import com.example.neptuneshop.screens.ProfileScreen
 import com.example.neptuneshop.screens.Routes
@@ -31,6 +35,7 @@ import com.example.neptuneshop.screens.sign_in.GoogleAuthUiClient
 import com.example.neptuneshop.screens.sign_in.SignInViewModel
 import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     private val apiService = RetrofitBuilder.getInstance().create(ApiService::class.java)
@@ -40,8 +45,10 @@ class MainActivity : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val db = AppDatabase.getInstance(this)
         enableEdgeToEdge()
 
         setContent {
@@ -78,11 +85,11 @@ class MainActivity : ComponentActivity() {
                             val user = googleAuthUiClient.getSignedInUser()
                             Toast.makeText(
                                 applicationContext,
-                                "SignIn successful id:${user?.userId}",
+                                "SignIn successful",
                                 Toast.LENGTH_SHORT
                             ).show()
                             with(sharedPref.edit()) {
-                                putString("userId", user?.userId)
+                                putString("userId", "${Random.nextInt(0,50)}")
                                 putString("name", user?.username)
                                 putString("email", user?.email)
                                 putString("mobile", user?.phoneNumber)
@@ -159,8 +166,51 @@ class MainActivity : ComponentActivity() {
                     ProductInfo(
                         id = id!!.toInt(),
                         navController = navController,
-                        apiService = apiService
+                        apiService = apiService,
+                        db = db
                     )
+                }
+                composable(Routes.CategoriesScreen.route){
+                    CategoriesScreen(
+                        apiService = apiService,
+                        navController = navController,
+                        onSignOut = {
+                            lifecycleScope.launch {
+                                googleAuthUiClient.signOut()
+                                Toast.makeText(
+                                    applicationContext,
+                                    "Signed Out successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
+                }
+                composable(Routes.OrdersScreen.route){
+                    OrdersScreen(
+                        db = db,
+                        onSignOut = {
+                            lifecycleScope.launch {
+                                googleAuthUiClient.signOut()
+                                Toast.makeText(
+                                    applicationContext,
+                                    "Signed Out successfully",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        apiService = apiService,
+                        navController = navController
+                    )
+                }
+                composable(Routes.FavoritesScreen.route){
+                    FavoriteScreen(
+                        navController,
+                        db = db
+                    )
+                }
+                composable(Routes.Contributors.route){
+                    Contributors(navController)
                 }
 
 
